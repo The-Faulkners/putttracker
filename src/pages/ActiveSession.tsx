@@ -217,22 +217,22 @@ export default function ActiveSession() {
                   </p>
                 </div>
 
-                {/* Made / Missed Buttons */}
+                {/* Missed / Made Buttons */}
                 <div className="grid grid-cols-2 gap-4 w-full max-w-sm">
-                  <motion.button onClick={handleMade} disabled={isSetComplete} className="aspect-square rounded-2xl bg-success/10 border-2 border-success flex flex-col items-center justify-center gap-2 transition-all hover:bg-success/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed" whileTap={{
-                scale: 0.95
-              }}>
-                    <Check className="w-12 h-12 text-success" />
-                    <span className="font-display font-bold text-lg text-success">Made</span>
-                    <span className="text-2xl font-bold text-success">{madeCount}</span>
-                  </motion.button>
-
                   <motion.button onClick={handleMissed} disabled={isSetComplete} className="aspect-square rounded-2xl bg-destructive/10 border-2 border-destructive flex flex-col items-center justify-center gap-2 transition-all hover:bg-destructive/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed" whileTap={{
                 scale: 0.95
               }}>
                     <X className="w-12 h-12 text-destructive" />
                     <span className="font-display font-bold text-lg text-destructive">Missed</span>
                     <span className="text-2xl font-bold text-destructive">{missedCount}</span>
+                  </motion.button>
+
+                  <motion.button onClick={handleMade} disabled={isSetComplete} className="aspect-square rounded-2xl bg-success/10 border-2 border-success flex flex-col items-center justify-center gap-2 transition-all hover:bg-success/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed" whileTap={{
+                scale: 0.95
+              }}>
+                    <Check className="w-12 h-12 text-success" />
+                    <span className="font-display font-bold text-lg text-success">Made</span>
+                    <span className="text-2xl font-bold text-success">{madeCount}</span>
                   </motion.button>
                 </div>
 
