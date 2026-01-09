@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Target, Check, X, RotateCcw, Square, Timer, ChevronRight } from 'lucide-react';
+import { Target, Check, X, RotateCcw, Square, Timer, ChevronRight, Ruler } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { usePracticeData } from '@/hooks/usePracticeData';
-import { PracticeSet } from '@/types/practice';
+import { PracticeSet, PuttResult } from '@/types/practice';
 export default function ActiveSession() {
   const {
     sessionId
@@ -16,14 +17,20 @@ export default function ActiveSession() {
   const {
     getSession,
     updateSession,
-    endSession
+    endSession,
+    settings,
+    saveSettings
   } = usePracticeData();
   const session = getSession(sessionId || '');
   const [currentSet, setCurrentSet] = useState<PracticeSet | null>(null);
   const [madeCount, setMadeCount] = useState(0);
   const [missedCount, setMissedCount] = useState(0);
+  const [puttResults, setPuttResults] = useState<PuttResult[]>([]);
   const [elapsed, setElapsed] = useState(0);
   const [showSummary, setShowSummary] = useState(false);
+  const [currentDistance, setCurrentDistance] = useState<number | undefined>(
+    () => settings.lastDistance
+  );
   const totalPutts = madeCount + missedCount;
   const discsPerSet = session?.defaultDiscsPerSet || 10;
   const remainingPutts = discsPerSet - totalPutts;
@@ -48,19 +55,29 @@ export default function ActiveSession() {
   }, [session, currentSet, navigate]);
   const startNewSet = useCallback(() => {
     if (!session) return;
+    
+    // Get distance from last set or settings
+    const lastSetDistance = session.sets.length > 0 
+      ? session.sets[session.sets.length - 1].distance 
+      : settings.lastDistance;
+    
     const newSet: PracticeSet = {
       id: crypto.randomUUID(),
       sessionId: session.id,
       startTime: new Date(),
       discsThrown: session.defaultDiscsPerSet,
-      discsScored: 0
+      discsScored: 0,
+      distance: lastSetDistance,
+      puttResults: []
     };
     setCurrentSet(newSet);
     setMadeCount(0);
     setMissedCount(0);
+    setPuttResults([]);
+    setCurrentDistance(lastSetDistance);
     setElapsed(0);
     setShowSummary(false);
-  }, [session]);
+  }, [session, settings.lastDistance]);
   if (!session) return null;
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -70,19 +87,29 @@ export default function ActiveSession() {
   const handleMade = () => {
     if (isSetComplete) return;
     setMadeCount(prev => prev + 1);
+    setPuttResults(prev => [...prev, 'made']);
   };
   const handleMissed = () => {
     if (isSetComplete) return;
     setMissedCount(prev => prev + 1);
+    setPuttResults(prev => [...prev, 'missed']);
   };
   const handleUndo = () => {
-    if (madeCount > 0 || missedCount > 0) {
-      // Undo last action - we'll remove from made first if both exist
-      if (missedCount > 0 && (missedCount >= madeCount || madeCount === 0)) {
-        setMissedCount(prev => prev - 1);
-      } else {
+    if (puttResults.length > 0) {
+      const lastResult = puttResults[puttResults.length - 1];
+      setPuttResults(prev => prev.slice(0, -1));
+      if (lastResult === 'made') {
         setMadeCount(prev => prev - 1);
+      } else {
+        setMissedCount(prev => prev - 1);
       }
+    }
+  };
+  const handleDistanceChange = (value: string) => {
+    const distance = value ? parseInt(value, 10) : undefined;
+    setCurrentDistance(distance);
+    if (distance) {
+      saveSettings({ ...settings, lastDistance: distance });
     }
   };
   const completeSet = () => {
@@ -91,7 +118,9 @@ export default function ActiveSession() {
       ...currentSet,
       endTime: new Date(),
       discsThrown: totalPutts,
-      discsScored: madeCount
+      discsScored: madeCount,
+      distance: currentDistance,
+      puttResults: puttResults
     };
     updateSession({
       ...session,
@@ -177,6 +206,20 @@ export default function ActiveSession() {
         }} exit={{
           opacity: 0
         }} className="flex-1 flex flex-col">
+              {/* Distance Input */}
+              <div className="mb-4 flex items-center gap-3 bg-card rounded-xl p-3 card-elevated">
+                <Ruler className="w-5 h-5 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Distance:</span>
+                <Input
+                  type="number"
+                  value={currentDistance || ''}
+                  onChange={(e) => handleDistanceChange(e.target.value)}
+                  placeholder="feet"
+                  className="w-20 h-8 text-center"
+                />
+                <span className="text-sm text-muted-foreground">ft</span>
+              </div>
+
               {/* Progress indicator */}
               <div className="mb-6">
                 <div className="flex justify-between text-sm mb-2">
