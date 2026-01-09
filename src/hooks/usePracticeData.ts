@@ -86,6 +86,26 @@ export function usePracticeData() {
     saveSessions(updated);
   }, [saveSessions]);
 
+  const deleteSession = useCallback((sessionId: string) => {
+    const currentSessions = getStoredSessions();
+    const updated = currentSessions.filter(s => s.id !== sessionId);
+    saveSessions(updated);
+  }, [saveSessions]);
+
+  const updateSet = useCallback((sessionId: string, setId: string, discsScored: number, discsThrown: number) => {
+    const currentSessions = getStoredSessions();
+    const updated = currentSessions.map(s => {
+      if (s.id !== sessionId) return s;
+      return {
+        ...s,
+        sets: s.sets.map(set => 
+          set.id === setId ? { ...set, discsScored, discsThrown } : set
+        ),
+      };
+    });
+    saveSessions(updated);
+  }, [saveSessions]);
+
   const getSession = useCallback((sessionId: string): PracticeSession | undefined => {
     // Always read fresh from localStorage to ensure we get the latest
     const currentSessions = getStoredSessions();
@@ -138,6 +158,8 @@ export function usePracticeData() {
     createSession,
     updateSession,
     endSession,
+    deleteSession,
+    updateSet,
     getSession,
     getCompletedSessions,
     getStats,
