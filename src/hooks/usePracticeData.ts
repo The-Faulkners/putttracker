@@ -163,5 +163,6 @@ export function usePracticeData() {
     getSession,
     getCompletedSessions,
     getStats,
+    saveSettings,
   };
 }
