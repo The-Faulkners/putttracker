@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Target, Check, Plus, Square, Timer } from 'lucide-react';
+import { Target, Check, X, RotateCcw, Square, Timer, ChevronRight } from 'lucide-react';
 import { Header } from '@/components/Header';
-import { DiscCounter } from '@/components/DiscCounter';
 import { Button } from '@/components/ui/button';
 import { usePracticeData } from '@/hooks/usePracticeData';
 import { PracticeSet } from '@/types/practice';
@@ -15,8 +14,22 @@ export default function ActiveSession() {
   
   const session = getSession(sessionId || '');
   const [currentSet, setCurrentSet] = useState<PracticeSet | null>(null);
-  const [discsScored, setDiscsScored] = useState(0);
+  const [madeCount, setMadeCount] = useState(0);
+  const [missedCount, setMissedCount] = useState(0);
   const [elapsed, setElapsed] = useState(0);
+  const [showSummary, setShowSummary] = useState(false);
+
+  const totalPutts = madeCount + missedCount;
+  const discsPerSet = session?.defaultDiscsPerSet || 10;
+  const remainingPutts = discsPerSet - totalPutts;
+  const isSetComplete = totalPutts >= discsPerSet;
+
+  // Start first set automatically
+  useEffect(() => {
+    if (session && !currentSet && !showSummary) {
+      startNewSet();
+    }
+  }, [session]);
 
   useEffect(() => {
     if (!session) {
@@ -32,15 +45,9 @@ export default function ActiveSession() {
     return () => clearInterval(timer);
   }, [session, currentSet, navigate]);
 
-  if (!session) return null;
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const startNewSet = () => {
+  const startNewSet = useCallback(() => {
+    if (!session) return;
+    
     const newSet: PracticeSet = {
       id: crypto.randomUUID(),
       sessionId: session.id,
@@ -49,8 +56,39 @@ export default function ActiveSession() {
       discsScored: 0,
     };
     setCurrentSet(newSet);
-    setDiscsScored(0);
+    setMadeCount(0);
+    setMissedCount(0);
     setElapsed(0);
+    setShowSummary(false);
+  }, [session]);
+
+  if (!session) return null;
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleMade = () => {
+    if (isSetComplete) return;
+    setMadeCount(prev => prev + 1);
+  };
+
+  const handleMissed = () => {
+    if (isSetComplete) return;
+    setMissedCount(prev => prev + 1);
+  };
+
+  const handleUndo = () => {
+    if (madeCount > 0 || missedCount > 0) {
+      // Undo last action - we'll remove from made first if both exist
+      if (missedCount > 0 && (missedCount >= madeCount || madeCount === 0)) {
+        setMissedCount(prev => prev - 1);
+      } else {
+        setMadeCount(prev => prev - 1);
+      }
+    }
   };
 
   const completeSet = () => {
@@ -59,7 +97,8 @@ export default function ActiveSession() {
     const completedSet: PracticeSet = {
       ...currentSet,
       endTime: new Date(),
-      discsScored,
+      discsThrown: totalPutts,
+      discsScored: madeCount,
     };
 
     updateSession({
@@ -67,8 +106,8 @@ export default function ActiveSession() {
       sets: [...session.sets, completedSet],
     });
 
+    setShowSummary(true);
     setCurrentSet(null);
-    setDiscsScored(0);
   };
 
   const handleEndSession = () => {
@@ -76,15 +115,17 @@ export default function ActiveSession() {
     navigate('/');
   };
 
-  const totalThrown = session.sets.reduce((acc, s) => acc + s.discsThrown, 0);
-  const totalScored = session.sets.reduce((acc, s) => acc + s.discsScored, 0);
-  const accuracy = totalThrown > 0 ? ((totalScored / totalThrown) * 100).toFixed(0) : 0;
+  const accuracy = totalPutts > 0 ? ((madeCount / totalPutts) * 100) : 0;
+  
+  // Session totals
+  const sessionMade = session.sets.reduce((acc, s) => acc + s.discsScored, 0) + (showSummary ? 0 : madeCount);
+  const sessionThrown = session.sets.reduce((acc, s) => acc + s.discsThrown, 0) + (showSummary ? 0 : totalPutts);
+  const sessionAccuracy = sessionThrown > 0 ? ((sessionMade / sessionThrown) * 100) : 0;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header 
-        title={currentSet ? `Set ${session.sets.length + 1}` : 'Session'}
-        showBack={!currentSet}
+        title={showSummary ? 'Set Complete' : `Set ${session.sets.length + 1}`}
         rightContent={
           <div className="flex items-center gap-2 text-muted-foreground">
             <Timer className="w-4 h-4" />
@@ -93,130 +134,171 @@ export default function ActiveSession() {
         }
       />
       
-      <div className="px-6 py-6">
+      <div className="flex-1 px-6 py-4 flex flex-col">
         <AnimatePresence mode="wait">
-          {currentSet ? (
+          {showSummary ? (
             <motion.div
-              key="active-set"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
+              key="summary"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="flex-1 flex flex-col"
             >
-              {/* Active Set UI */}
-              <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full gradient-accent mb-4 animate-pulse-soft">
-                  <Target className="w-8 h-8 text-accent-foreground" />
-                </div>
-                <h2 className="font-display font-bold text-xl text-foreground mb-1">
-                  Throwing {currentSet.discsThrown} discs
-                </h2>
-                <p className="text-muted-foreground">
-                  How many did you make?
-                </p>
-              </div>
-
-              <div className="bg-card rounded-2xl p-8 card-elevated mb-8">
-                <DiscCounter
-                  value={discsScored}
-                  onChange={setDiscsScored}
-                  max={currentSet.discsThrown}
-                  label="Discs scored"
-                />
+              {/* Set Summary */}
+              <div className="flex-1 flex flex-col items-center justify-center">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", delay: 0.2 }}
+                  className="w-24 h-24 rounded-full bg-success/20 flex items-center justify-center mb-6"
+                >
+                  <Check className="w-12 h-12 text-success" />
+                </motion.div>
                 
-                <div className="mt-6 pt-6 border-t border-border">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Accuracy</span>
-                    <span className="font-semibold text-foreground">
-                      {((discsScored / currentSet.discsThrown) * 100).toFixed(0)}%
-                    </span>
+                <h2 className="font-display font-bold text-3xl text-foreground mb-2">
+                  {madeCount} / {totalPutts}
+                </h2>
+                <p className="text-xl text-primary font-semibold mb-8">
+                  {accuracy.toFixed(0)}% accuracy
+                </p>
+
+                {/* Session Stats */}
+                <div className="bg-card rounded-xl p-5 w-full card-elevated">
+                  <h3 className="text-sm font-medium text-muted-foreground mb-3">Session Total</h3>
+                  <div className="flex justify-between items-center">
+                    <span className="text-foreground">{sessionMade} / {sessionThrown} made</span>
+                    <span className="font-bold text-primary">{sessionAccuracy.toFixed(0)}%</span>
                   </div>
                 </div>
               </div>
 
-              <Button 
-                onClick={completeSet}
-                className="w-full h-14 text-lg font-semibold bg-success hover:bg-success/90"
-              >
-                <Check className="w-5 h-5 mr-2" />
-                Complete Set
-              </Button>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="session-overview"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-            >
-              {/* Session Overview */}
-              <div className="bg-card rounded-2xl p-6 card-elevated mb-6">
-                <h3 className="font-display font-semibold text-lg mb-4">Session Stats</h3>
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div>
-                    <p className="text-2xl font-bold text-foreground">{session.sets.length}</p>
-                    <p className="text-xs text-muted-foreground">Sets</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-foreground">{totalScored}/{totalThrown}</p>
-                    <p className="text-xs text-muted-foreground">Made</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-primary">{accuracy}%</p>
-                    <p className="text-xs text-muted-foreground">Accuracy</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Set History */}
-              {session.sets.length > 0 && (
-                <div className="mb-6">
-                  <h3 className="font-display font-semibold text-sm text-muted-foreground mb-3">
-                    Completed Sets
-                  </h3>
-                  <div className="space-y-2">
-                    {session.sets.map((set, index) => (
-                      <motion.div
-                        key={set.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        className="bg-card rounded-lg p-4 flex justify-between items-center"
-                      >
-                        <span className="font-medium">Set {index + 1}</span>
-                        <div className="flex items-center gap-3">
-                          <span className="text-muted-foreground">
-                            {set.discsScored}/{set.discsThrown}
-                          </span>
-                          <span className="font-semibold text-primary">
-                            {((set.discsScored / set.discsThrown) * 100).toFixed(0)}%
-                          </span>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="space-y-3">
+              {/* Actions */}
+              <div className="space-y-3 pt-6">
                 <Button 
                   onClick={startNewSet}
                   className="w-full h-14 text-lg font-semibold gradient-primary hover:opacity-90"
                 >
-                  <Plus className="w-5 h-5 mr-2" />
-                  Start New Set
+                  Next Set
+                  <ChevronRight className="w-5 h-5 ml-2" />
                 </Button>
                 
-                {session.sets.length > 0 && (
-                  <Button 
-                    variant="outline"
-                    onClick={handleEndSession}
-                    className="w-full h-12"
+                <Button 
+                  variant="outline"
+                  onClick={handleEndSession}
+                  className="w-full h-12"
+                >
+                  <Square className="w-4 h-4 mr-2" />
+                  End Session
+                </Button>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="tracking"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex-1 flex flex-col"
+            >
+              {/* Progress indicator */}
+              <div className="mb-6">
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-muted-foreground">Putt {totalPutts + 1} of {discsPerSet}</span>
+                  <span className="font-medium text-foreground">{remainingPutts} remaining</span>
+                </div>
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <motion.div 
+                    className="h-full gradient-primary"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${(totalPutts / discsPerSet) * 100}%` }}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  />
+                </div>
+              </div>
+
+              {/* Score Display */}
+              <div className="flex-1 flex flex-col items-center justify-center">
+                <div className="text-center mb-8">
+                  <motion.div
+                    key={`${madeCount}-${missedCount}`}
+                    initial={{ scale: 1.1 }}
+                    animate={{ scale: 1 }}
+                    className="mb-2"
                   >
-                    <Square className="w-4 h-4 mr-2" />
-                    End Session
-                  </Button>
+                    <span className="font-display font-bold text-6xl text-foreground">
+                      {madeCount}
+                    </span>
+                    <span className="font-display font-bold text-4xl text-muted-foreground mx-2">/</span>
+                    <span className="font-display font-bold text-4xl text-muted-foreground">
+                      {totalPutts}
+                    </span>
+                  </motion.div>
+                  <p className="text-xl font-semibold text-primary">
+                    {accuracy.toFixed(0)}%
+                  </p>
+                </div>
+
+                {/* Made / Missed Buttons */}
+                <div className="grid grid-cols-2 gap-4 w-full max-w-sm">
+                  <motion.button
+                    onClick={handleMade}
+                    disabled={isSetComplete}
+                    className="aspect-square rounded-2xl bg-success/10 border-2 border-success flex flex-col items-center justify-center gap-2 transition-all hover:bg-success/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Check className="w-12 h-12 text-success" />
+                    <span className="font-display font-bold text-lg text-success">Made</span>
+                    <span className="text-2xl font-bold text-success">{madeCount}</span>
+                  </motion.button>
+
+                  <motion.button
+                    onClick={handleMissed}
+                    disabled={isSetComplete}
+                    className="aspect-square rounded-2xl bg-destructive/10 border-2 border-destructive flex flex-col items-center justify-center gap-2 transition-all hover:bg-destructive/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <X className="w-12 h-12 text-destructive" />
+                    <span className="font-display font-bold text-lg text-destructive">Missed</span>
+                    <span className="text-2xl font-bold text-destructive">{missedCount}</span>
+                  </motion.button>
+                </div>
+
+                {/* Undo button */}
+                {totalPutts > 0 && !isSetComplete && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-6"
+                  >
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleUndo}
+                      className="text-muted-foreground"
+                    >
+                      <RotateCcw className="w-4 h-4 mr-2" />
+                      Undo last
+                    </Button>
+                  </motion.div>
                 )}
               </div>
+
+              {/* Complete Set Button */}
+              {isSetComplete && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="pt-4"
+                >
+                  <Button 
+                    onClick={completeSet}
+                    className="w-full h-14 text-lg font-semibold bg-success hover:bg-success/90"
+                  >
+                    <Check className="w-5 h-5 mr-2" />
+                    Complete Set
+                  </Button>
+                </motion.div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
