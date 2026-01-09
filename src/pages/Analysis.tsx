@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { TrendingUp, Target, Flame, Trophy, Disc, BarChart3 } from 'lucide-react';
+import { TrendingUp, Target, Flame, Trophy, Disc, BarChart3, Zap } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { StatCard } from '@/components/StatCard';
 import { usePracticeData } from '@/hooks/usePracticeData';
@@ -56,7 +56,31 @@ export default function Analysis() {
     return { session: best, accuracy: bestAccuracy };
   };
 
+  // Calculate longest made streak across all sessions
+  const getLongestMadeStreak = () => {
+    let longestStreak = 0;
+    
+    for (const session of sessions) {
+      for (const set of session.sets) {
+        if (!set.puttResults) continue;
+        
+        let currentStreak = 0;
+        for (const result of set.puttResults) {
+          if (result === 'made') {
+            currentStreak++;
+            longestStreak = Math.max(longestStreak, currentStreak);
+          } else {
+            currentStreak = 0;
+          }
+        }
+      }
+    }
+    
+    return longestStreak;
+  };
+
   const bestSession = getBestSession();
+  const longestMadeStreak = getLongestMadeStreak();
 
   return (
     <div className="min-h-screen bg-background">
@@ -117,6 +141,15 @@ export default function Analysis() {
                   subtext="sessions ≥70%"
                   delay={0.4}
                 />
+                {longestMadeStreak > 0 && (
+                  <StatCard 
+                    icon={Zap} 
+                    label="Best Streak" 
+                    value={longestMadeStreak}
+                    subtext="putts in a row"
+                    delay={0.5}
+                  />
+                )}
               </div>
             </motion.div>
 
