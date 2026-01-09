@@ -6,19 +6,24 @@ import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { usePracticeData } from '@/hooks/usePracticeData';
 import { PracticeSet } from '@/types/practice';
-
 export default function ActiveSession() {
-  const { sessionId } = useParams<{ sessionId: string }>();
+  const {
+    sessionId
+  } = useParams<{
+    sessionId: string;
+  }>();
   const navigate = useNavigate();
-  const { getSession, updateSession, endSession } = usePracticeData();
-  
+  const {
+    getSession,
+    updateSession,
+    endSession
+  } = usePracticeData();
   const session = getSession(sessionId || '');
   const [currentSet, setCurrentSet] = useState<PracticeSet | null>(null);
   const [madeCount, setMadeCount] = useState(0);
   const [missedCount, setMissedCount] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const [showSummary, setShowSummary] = useState(false);
-
   const totalPutts = madeCount + missedCount;
   const discsPerSet = session?.defaultDiscsPerSet || 10;
   const remainingPutts = discsPerSet - totalPutts;
@@ -30,30 +35,25 @@ export default function ActiveSession() {
       startNewSet();
     }
   }, [session]);
-
   useEffect(() => {
     if (!session) {
       navigate('/');
       return;
     }
-
     const timer = setInterval(() => {
       const start = currentSet ? new Date(currentSet.startTime) : new Date(session.startTime);
       setElapsed(Math.floor((Date.now() - start.getTime()) / 1000));
     }, 1000);
-
     return () => clearInterval(timer);
   }, [session, currentSet, navigate]);
-
   const startNewSet = useCallback(() => {
     if (!session) return;
-    
     const newSet: PracticeSet = {
       id: crypto.randomUUID(),
       sessionId: session.id,
       startTime: new Date(),
       discsThrown: session.defaultDiscsPerSet,
-      discsScored: 0,
+      discsScored: 0
     };
     setCurrentSet(newSet);
     setMadeCount(0);
@@ -61,25 +61,20 @@ export default function ActiveSession() {
     setElapsed(0);
     setShowSummary(false);
   }, [session]);
-
   if (!session) return null;
-
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
-
   const handleMade = () => {
     if (isSetComplete) return;
     setMadeCount(prev => prev + 1);
   };
-
   const handleMissed = () => {
     if (isSetComplete) return;
     setMissedCount(prev => prev + 1);
   };
-
   const handleUndo = () => {
     if (madeCount > 0 || missedCount > 0) {
       // Undo last action - we'll remove from made first if both exist
@@ -90,68 +85,59 @@ export default function ActiveSession() {
       }
     }
   };
-
   const completeSet = () => {
     if (!currentSet) return;
-
     const completedSet: PracticeSet = {
       ...currentSet,
       endTime: new Date(),
       discsThrown: totalPutts,
-      discsScored: madeCount,
+      discsScored: madeCount
     };
-
     updateSession({
       ...session,
-      sets: [...session.sets, completedSet],
+      sets: [...session.sets, completedSet]
     });
-
     setShowSummary(true);
     setCurrentSet(null);
   };
-
   const handleEndSession = () => {
     endSession(session.id);
     navigate('/');
   };
+  const accuracy = totalPutts > 0 ? madeCount / totalPutts * 100 : 0;
 
-  const accuracy = totalPutts > 0 ? ((madeCount / totalPutts) * 100) : 0;
-  
   // Session totals
   const sessionMade = session.sets.reduce((acc, s) => acc + s.discsScored, 0) + (showSummary ? 0 : madeCount);
   const sessionThrown = session.sets.reduce((acc, s) => acc + s.discsThrown, 0) + (showSummary ? 0 : totalPutts);
-  const sessionAccuracy = sessionThrown > 0 ? ((sessionMade / sessionThrown) * 100) : 0;
-
-  return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <Header 
-        title={showSummary ? 'Set Complete' : `Set ${session.sets.length + 1}`}
-        rightContent={
-          <div className="flex items-center gap-2 text-muted-foreground">
+  const sessionAccuracy = sessionThrown > 0 ? sessionMade / sessionThrown * 100 : 0;
+  return <div className="min-h-screen bg-background flex flex-col">
+      <Header title={showSummary ? 'Set Complete' : `Set ${session.sets.length + 1}`} rightContent={<div className="flex items-center gap-2 text-muted-foreground">
             <Timer className="w-4 h-4" />
             <span className="font-mono text-sm">{formatTime(elapsed)}</span>
-          </div>
-        }
-      />
+          </div>} />
       
       <div className="flex-1 px-6 py-4 flex flex-col">
         <AnimatePresence mode="wait">
-          {showSummary ? (
-            <motion.div
-              key="summary"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="flex-1 flex flex-col"
-            >
+          {showSummary ? <motion.div key="summary" initial={{
+          opacity: 0,
+          scale: 0.95
+        }} animate={{
+          opacity: 1,
+          scale: 1
+        }} exit={{
+          opacity: 0,
+          scale: 0.95
+        }} className="flex-1 flex flex-col">
               {/* Set Summary */}
               <div className="flex-1 flex flex-col items-center justify-center">
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", delay: 0.2 }}
-                  className="w-24 h-24 rounded-full bg-success/20 flex items-center justify-center mb-6"
-                >
+                <motion.div initial={{
+              scale: 0
+            }} animate={{
+              scale: 1
+            }} transition={{
+              type: "spring",
+              delay: 0.2
+            }} className="w-24 h-24 rounded-full bg-success/20 flex items-center justify-center mb-6">
                   <Check className="w-12 h-12 text-success" />
                 </motion.div>
                 
@@ -174,32 +160,23 @@ export default function ActiveSession() {
 
               {/* Actions */}
               <div className="space-y-3 pt-6">
-                <Button 
-                  onClick={startNewSet}
-                  className="w-full h-14 text-lg font-semibold gradient-primary hover:opacity-90"
-                >
+                <Button onClick={startNewSet} className="w-full h-14 text-lg font-semibold gradient-primary hover:opacity-90">
                   Next Set
                   <ChevronRight className="w-5 h-5 ml-2" />
                 </Button>
                 
-                <Button 
-                  variant="outline"
-                  onClick={handleEndSession}
-                  className="w-full h-12"
-                >
+                <Button variant="outline" onClick={handleEndSession} className="w-full h-12">
                   <Square className="w-4 h-4 mr-2" />
                   End Session
                 </Button>
               </div>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="tracking"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="flex-1 flex flex-col"
-            >
+            </motion.div> : <motion.div key="tracking" initial={{
+          opacity: 0
+        }} animate={{
+          opacity: 1
+        }} exit={{
+          opacity: 0
+        }} className="flex-1 flex flex-col">
               {/* Progress indicator */}
               <div className="mb-6">
                 <div className="flex justify-between text-sm mb-2">
@@ -207,24 +184,26 @@ export default function ActiveSession() {
                   <span className="font-medium text-foreground">{remainingPutts} remaining</span>
                 </div>
                 <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <motion.div 
-                    className="h-full gradient-primary"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${(totalPutts / discsPerSet) * 100}%` }}
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                  />
+                  <motion.div className="h-full gradient-primary" initial={{
+                width: 0
+              }} animate={{
+                width: `${totalPutts / discsPerSet * 100}%`
+              }} transition={{
+                type: "spring",
+                stiffness: 300,
+                damping: 30
+              }} />
                 </div>
               </div>
 
               {/* Score Display */}
               <div className="flex-1 flex flex-col items-center justify-center">
                 <div className="text-center mb-8">
-                  <motion.div
-                    key={`${madeCount}-${missedCount}`}
-                    initial={{ scale: 1.1 }}
-                    animate={{ scale: 1 }}
-                    className="mb-2"
-                  >
+                  <motion.div key={`${madeCount}-${missedCount}`} initial={{
+                scale: 1.1
+              }} animate={{
+                scale: 1
+              }} className="mb-2">
                     <span className="font-display font-bold text-6xl text-foreground">
                       {madeCount}
                     </span>
@@ -240,23 +219,17 @@ export default function ActiveSession() {
 
                 {/* Made / Missed Buttons */}
                 <div className="grid grid-cols-2 gap-4 w-full max-w-sm">
-                  <motion.button
-                    onClick={handleMade}
-                    disabled={isSetComplete}
-                    className="aspect-square rounded-2xl bg-success/10 border-2 border-success flex flex-col items-center justify-center gap-2 transition-all hover:bg-success/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                    whileTap={{ scale: 0.95 }}
-                  >
+                  <motion.button onClick={handleMade} disabled={isSetComplete} className="aspect-square rounded-2xl bg-success/10 border-2 border-success flex flex-col items-center justify-center gap-2 transition-all hover:bg-success/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed" whileTap={{
+                scale: 0.95
+              }}>
                     <Check className="w-12 h-12 text-success" />
                     <span className="font-display font-bold text-lg text-success">Made</span>
                     <span className="text-2xl font-bold text-success">{madeCount}</span>
                   </motion.button>
 
-                  <motion.button
-                    onClick={handleMissed}
-                    disabled={isSetComplete}
-                    className="aspect-square rounded-2xl bg-destructive/10 border-2 border-destructive flex flex-col items-center justify-center gap-2 transition-all hover:bg-destructive/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                    whileTap={{ scale: 0.95 }}
-                  >
+                  <motion.button onClick={handleMissed} disabled={isSetComplete} className="aspect-square rounded-2xl bg-destructive/10 border-2 border-destructive flex flex-col items-center justify-center gap-2 transition-all hover:bg-destructive/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed" whileTap={{
+                scale: 0.95
+              }}>
                     <X className="w-12 h-12 text-destructive" />
                     <span className="font-display font-bold text-lg text-destructive">Missed</span>
                     <span className="text-2xl font-bold text-destructive">{missedCount}</span>
@@ -264,45 +237,35 @@ export default function ActiveSession() {
                 </div>
 
                 {/* Undo button */}
-                {totalPutts > 0 && !isSetComplete && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mt-6"
-                  >
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleUndo}
-                      className="text-muted-foreground"
-                    >
+                {totalPutts > 0 && !isSetComplete && <motion.div initial={{
+              opacity: 0,
+              y: 10
+            }} animate={{
+              opacity: 1,
+              y: 0
+            }} className="mt-6">
+                    <Button variant="ghost" size="sm" onClick={handleUndo} className="text-muted-foreground">
                       <RotateCcw className="w-4 h-4 mr-2" />
                       Undo last
                     </Button>
-                  </motion.div>
-                )}
+                  </motion.div>}
               </div>
 
               {/* Complete Set Button */}
-              {isSetComplete && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="pt-4"
-                >
-                  <Button 
-                    onClick={completeSet}
-                    className="w-full h-14 text-lg font-semibold bg-success hover:bg-success/90"
-                  >
+              {isSetComplete && <motion.div initial={{
+            opacity: 0,
+            y: 20
+          }} animate={{
+            opacity: 1,
+            y: 0
+          }} className="pt-4 py-[52px]">
+                  <Button onClick={completeSet} className="w-full h-14 text-lg font-semibold bg-success hover:bg-success/90">
                     <Check className="w-5 h-5 mr-2" />
                     Complete Set
                   </Button>
-                </motion.div>
-              )}
-            </motion.div>
-          )}
+                </motion.div>}
+            </motion.div>}
         </AnimatePresence>
       </div>
-    </div>
-  );
+    </div>;
 }
