@@ -141,15 +141,6 @@ export default function Analysis() {
                   subtext="sessions ≥70%"
                   delay={0.4}
                 />
-                {longestMadeStreak > 0 && (
-                  <StatCard 
-                    icon={Zap} 
-                    label="Best Streak" 
-                    value={longestMadeStreak}
-                    subtext="putts in a row"
-                    delay={0.5}
-                  />
-                )}
               </div>
             </motion.div>
 
@@ -196,16 +187,31 @@ export default function Analysis() {
                 <h2 className="font-display font-semibold text-sm text-muted-foreground mb-4 uppercase tracking-wide">
                   Personal Best
                 </h2>
-                <div className="bg-gradient-to-br from-primary/10 to-accent/10 rounded-xl p-5 border border-primary/20">
-                  <div className="flex items-center gap-3 mb-2">
-                    <Trophy className="w-5 h-5 text-primary" />
-                    <span className="font-display font-bold text-2xl text-primary">
-                      {bestSession.accuracy.toFixed(0)}%
-                    </span>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-gradient-to-br from-primary/10 to-accent/10 rounded-xl p-5 border border-primary/20">
+                    <div className="flex items-center gap-3 mb-2">
+                      <Trophy className="w-5 h-5 text-primary" />
+                      <span className="font-display font-bold text-2xl text-primary">
+                        {bestSession.accuracy.toFixed(0)}%
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Best session accuracy
+                    </p>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    Best session accuracy achieved
-                  </p>
+                  {longestMadeStreak > 0 && (
+                    <div className="bg-gradient-to-br from-primary/10 to-accent/10 rounded-xl p-5 border border-primary/20">
+                      <div className="flex items-center gap-3 mb-2">
+                        <Zap className="w-5 h-5 text-primary" />
+                        <span className="font-display font-bold text-2xl text-primary">
+                          {longestMadeStreak}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Putts in a row
+                      </p>
+                    </div>
+                  )}
                 </div>
               </motion.div>
             )}
