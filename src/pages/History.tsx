@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { PracticeSet } from '@/types/practice';
+import { PuttResultsIndicator } from '@/components/PuttResultsIndicator';
 
 export default function History() {
   const { getCompletedSessions, deleteSession, updateSet } = usePracticeData();
@@ -154,11 +155,12 @@ export default function History() {
                     <div className="flex gap-1 flex-wrap">
                       {session.sets.map((set) => {
                         const setAccuracy = (set.discsScored / set.discsThrown) * 100;
+                        const hasPuttResults = set.puttResults && set.puttResults.length > 0;
                         return (
                           <button
                             key={set.id}
                             onClick={() => handleEditSet(session.id, set)}
-                            className={`w-10 h-10 rounded flex flex-col items-center justify-center text-xs font-medium transition-all hover:ring-2 hover:ring-primary ${
+                            className={`min-w-10 rounded flex flex-col items-center justify-center text-xs font-medium transition-all hover:ring-2 hover:ring-primary p-2 ${
                               setAccuracy >= 80 
                                 ? 'bg-success/20 text-success' 
                                 : setAccuracy >= 60 
@@ -166,8 +168,13 @@ export default function History() {
                                 : 'bg-muted text-muted-foreground'
                             }`}
                           >
-                            <span className="font-bold">{set.discsScored}</span>
-                            <span className="text-[10px] opacity-70">/{set.discsThrown}</span>
+                            <div className="flex items-center gap-1 mb-1">
+                              <span className="font-bold">{set.discsScored}</span>
+                              <span className="text-[10px] opacity-70">/{set.discsThrown}</span>
+                            </div>
+                            {hasPuttResults && (
+                              <PuttResultsIndicator results={set.puttResults!} size="sm" />
+                            )}
                           </button>
                         );
                       })}

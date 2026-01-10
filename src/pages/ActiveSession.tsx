@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { usePracticeData } from '@/hooks/usePracticeData';
 import { PracticeSet, PuttResult } from '@/types/practice';
+import { PuttResultsIndicator } from '@/components/PuttResultsIndicator';
 export default function ActiveSession() {
   const {
     sessionId
@@ -173,9 +174,12 @@ export default function ActiveSession() {
                 <h2 className="font-display font-bold text-3xl text-foreground mb-2">
                   {madeCount} / {totalPutts}
                 </h2>
-                <p className="text-xl text-primary font-semibold mb-8">
+                <p className="text-xl text-primary font-semibold mb-4">
                   {accuracy.toFixed(0)}% accuracy
                 </p>
+                
+                {/* Putt Results Indicator */}
+                <PuttResultsIndicator results={puttResults} size="md" className="justify-center max-w-xs mb-8" />
 
                 {/* Session Stats */}
                 <div className="bg-card rounded-xl p-5 w-full card-elevated">
@@ -255,9 +259,14 @@ export default function ActiveSession() {
                       {totalPutts}
                     </span>
                   </motion.div>
-                  <p className="text-xl font-semibold text-primary">
+                  <p className="text-xl font-semibold text-primary mb-4">
                     {accuracy.toFixed(0)}%
                   </p>
+                  
+                  {/* Putt Results Indicator */}
+                  {puttResults.length > 0 && (
+                    <PuttResultsIndicator results={puttResults} size="md" className="justify-center max-w-xs" />
+                  )}
                 </div>
 
                 {/* Missed / Made Buttons */}
