@@ -4,13 +4,23 @@ import { useNavigate } from 'react-router-dom';
 import { ActionButton } from '@/components/ActionButton';
 import { StatCard } from '@/components/StatCard';
 import { usePracticeData } from '@/hooks/usePracticeData';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { PullToRefresh } from '@/components/PullToRefresh';
+
 const Index = () => {
   const navigate = useNavigate();
-  const {
-    getStats
-  } = usePracticeData();
+  const { getStats } = usePracticeData();
   const stats = getStats();
-  return <div className="min-h-screen bg-background">
+  
+  const { pullDistance, threshold, isRefreshing } = usePullToRefresh();
+
+  return (
+    <div className="min-h-screen bg-background">
+      <PullToRefresh 
+        pullDistance={pullDistance} 
+        threshold={threshold} 
+        isRefreshing={isRefreshing} 
+      />
       {/* Hero Section */}
       <div className="gradient-hero px-6 pt-12 pb-8 py-px">
         <motion.div initial={{
@@ -77,6 +87,8 @@ const Index = () => {
           <ActionButton icon={BarChart3} label="Analysis" description="See your progress and trends" variant="secondary" onClick={() => navigate('/analysis')} />
         </motion.div>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default Index;
