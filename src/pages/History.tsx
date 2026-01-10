@@ -22,8 +22,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { PracticeSet } from '@/types/practice';
+import { PracticeSet, PuttResult } from '@/types/practice';
 import { PuttResultsIndicator } from '@/components/PuttResultsIndicator';
+import { cn } from '@/lib/utils';
 
 export default function History() {
   const { getCompletedSessions, deleteSession, updateSet } = usePracticeData();
@@ -33,6 +34,7 @@ export default function History() {
   const [editingSet, setEditingSet] = useState<PracticeSet | null>(null);
   const [editScored, setEditScored] = useState(0);
   const [editThrown, setEditThrown] = useState(0);
+  const [editPuttResults, setEditPuttResults] = useState<PuttResult[]>([]);
 
   const refreshSessions = () => setSessions(getCompletedSessions());
 
@@ -61,11 +63,23 @@ export default function History() {
     setEditingSet(set);
     setEditScored(set.discsScored);
     setEditThrown(set.discsThrown);
+    setEditPuttResults(set.puttResults || []);
+  };
+
+  const handleTogglePutt = (index: number) => {
+    setEditPuttResults(prev => {
+      const updated = [...prev];
+      updated[index] = updated[index] === 'made' ? 'missed' : 'made';
+      // Recalculate scored count
+      const newScored = updated.filter(r => r === 'made').length;
+      setEditScored(newScored);
+      return updated;
+    });
   };
 
   const handleSaveSet = () => {
     if (editingSession && editingSet) {
-      updateSet(editingSession, editingSet.id, editScored, editThrown);
+      updateSet(editingSession, editingSet.id, editScored, editThrown, editPuttResults.length > 0 ? editPuttResults : undefined);
       refreshSessions();
       setEditingSession(null);
       setEditingSet(null);
@@ -215,28 +229,55 @@ export default function History() {
             <DialogTitle>Edit Set</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Discs Made</label>
-              <Input
-                type="number"
-                min={0}
-                max={editThrown}
-                value={editScored}
-                onChange={(e) => setEditScored(Math.min(Number(e.target.value), editThrown))}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Total Discs</label>
-              <Input
-                type="number"
-                min={1}
-                value={editThrown}
-                onChange={(e) => {
-                  const newThrown = Math.max(1, Number(e.target.value));
-                  setEditThrown(newThrown);
-                  if (editScored > newThrown) setEditScored(newThrown);
-                }}
-              />
+            {/* Putt Results Toggle */}
+            {editPuttResults.length > 0 && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Tap to toggle each putt</label>
+                <div className="flex flex-wrap gap-2 p-3 bg-muted/50 rounded-lg">
+                  {editPuttResults.map((result, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleTogglePutt(index)}
+                      className={cn(
+                        'w-7 h-7 rounded-full flex items-center justify-center transition-all hover:scale-110',
+                        result === 'made'
+                          ? 'bg-success text-success-foreground'
+                          : 'border-2 border-destructive bg-transparent'
+                      )}
+                    >
+                      <span className="text-xs font-medium">{index + 1}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Made</label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={editThrown}
+                  value={editScored}
+                  onChange={(e) => setEditScored(Math.min(Number(e.target.value), editThrown))}
+                  disabled={editPuttResults.length > 0}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Total</label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={editThrown}
+                  onChange={(e) => {
+                    const newThrown = Math.max(1, Number(e.target.value));
+                    setEditThrown(newThrown);
+                    if (editScored > newThrown) setEditScored(newThrown);
+                  }}
+                  disabled={editPuttResults.length > 0}
+                />
+              </div>
             </div>
             <div className="text-center text-lg font-semibold text-primary">
               {editThrown > 0 ? ((editScored / editThrown) * 100).toFixed(0) : 0}% accuracy
