@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { PracticeSession, SessionSettings } from '@/types/practice';
+import { PracticeSession, SessionSettings, PuttResult } from '@/types/practice';
 
 const SESSIONS_KEY = 'disc-golf-sessions';
 const SETTINGS_KEY = 'disc-golf-settings';
@@ -92,14 +92,14 @@ export function usePracticeData() {
     saveSessions(updated);
   }, [saveSessions]);
 
-  const updateSet = useCallback((sessionId: string, setId: string, discsScored: number, discsThrown: number) => {
+  const updateSet = useCallback((sessionId: string, setId: string, discsScored: number, discsThrown: number, puttResults?: PuttResult[]) => {
     const currentSessions = getStoredSessions();
     const updated = currentSessions.map(s => {
       if (s.id !== sessionId) return s;
       return {
         ...s,
         sets: s.sets.map(set => 
-          set.id === setId ? { ...set, discsScored, discsThrown } : set
+          set.id === setId ? { ...set, discsScored, discsThrown, puttResults } : set
         ),
       };
     });
