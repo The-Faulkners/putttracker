@@ -28,12 +28,12 @@ const getStoredSessions = (): PracticeSession[] => {
 
 const getStoredSettings = (): SessionSettings => {
   const stored = localStorage.getItem(SETTINGS_KEY);
-  if (!stored) return { lastDiscsPerSet: 10 };
+  if (!stored) return { lastDiscsPerSet: 10, lastDistance: 20 };
   
   try {
     return JSON.parse(stored);
   } catch {
-    return { lastDiscsPerSet: 10 };
+    return { lastDiscsPerSet: 10, lastDistance: 20 };
   }
 };
 
