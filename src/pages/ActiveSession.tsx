@@ -60,10 +60,11 @@ export default function ActiveSession() {
   const startNewSet = useCallback(() => {
     if (!session) return;
     
-    // Get distance from last set or settings
-    const lastSetDistance = session.sets.length > 0 
-      ? session.sets[session.sets.length - 1].distance 
-      : settings.lastDistance;
+    // Get distance from last set (if present) or fall back to last-used distance
+    const previousSetDistance = session.sets.length > 0
+      ? session.sets[session.sets.length - 1].distance
+      : undefined;
+    const lastSetDistance = previousSetDistance ?? settings.lastDistance ?? 20;
     
     const newSet: PracticeSet = {
       id: crypto.randomUUID(),
