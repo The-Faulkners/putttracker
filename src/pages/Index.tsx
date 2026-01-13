@@ -15,7 +15,7 @@ const Index = () => {
   const { pullDistance, threshold, isRefreshing } = usePullToRefresh();
 
   return (
-    <div className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background">
       <PullToRefresh 
         pullDistance={pullDistance} 
         threshold={threshold} 
@@ -87,7 +87,7 @@ const Index = () => {
           <ActionButton icon={BarChart3} label="Analysis" description="See your progress and trends" variant="secondary" onClick={() => navigate('/analysis')} />
         </motion.div>
       </div>
-    </div>
+    </main>
   );
 };
 
