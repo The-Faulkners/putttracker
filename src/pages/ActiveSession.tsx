@@ -130,6 +130,10 @@ export default function ActiveSession() {
       ...session,
       sets: [...session.sets, completedSet]
     });
+    // Save distance to settings so it persists to next session
+    if (currentDistance) {
+      saveSettings({ ...settings, lastDistance: currentDistance });
+    }
     setShowSummary(true);
     setCurrentSet(null);
   };
