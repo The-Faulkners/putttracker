@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Target, Check, X, RotateCcw, Square, Timer, ChevronRight, Ruler } from 'lucide-react';
+import { Target, Check, X, RotateCcw, Square, Timer, ChevronRight, Ruler, Sun } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import { usePracticeData } from '@/hooks/usePracticeData';
+import { useWakeLock } from '@/hooks/useWakeLock';
 import { PracticeSet, PuttResult } from '@/types/practice';
 import { PuttResultsIndicator } from '@/components/PuttResultsIndicator';
 export default function ActiveSession() {
@@ -23,6 +25,7 @@ export default function ActiveSession() {
     saveSettings
   } = usePracticeData();
   const session = getSession(sessionId || '');
+  const { isSupported: wakeLockSupported, isActive: wakeLockActive, toggleWakeLock } = useWakeLock();
   const [currentSet, setCurrentSet] = useState<PracticeSet | null>(null);
   const [madeCount, setMadeCount] = useState(0);
   const [missedCount, setMissedCount] = useState(0);
@@ -141,9 +144,20 @@ export default function ActiveSession() {
   const sessionThrown = session.sets.reduce((acc, s) => acc + s.discsThrown, 0) + (showSummary ? 0 : totalPutts);
   const sessionAccuracy = sessionThrown > 0 ? sessionMade / sessionThrown * 100 : 0;
   return <div className="min-h-screen bg-background flex flex-col">
-      <Header title={showSummary ? 'Set Complete' : `Set ${session.sets.length + 1}`} rightContent={<div className="flex items-center gap-2 text-muted-foreground">
-            <Timer className="w-4 h-4" />
-            <span className="font-mono text-sm">{formatTime(elapsed)}</span>
+      <Header title={showSummary ? 'Set Complete' : `Set ${session.sets.length + 1}`} rightContent={<div className="flex items-center gap-3">
+            {wakeLockSupported && (
+              <button 
+                onClick={toggleWakeLock}
+                className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-colors ${wakeLockActive ? 'bg-primary/20 text-primary' : 'text-muted-foreground'}`}
+              >
+                <Sun className="w-4 h-4" />
+                <Switch checked={wakeLockActive} className="scale-75" />
+              </button>
+            )}
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Timer className="w-4 h-4" />
+              <span className="font-mono text-sm">{formatTime(elapsed)}</span>
+            </div>
           </div>} />
       
       <div className="flex-1 px-6 py-4 flex flex-col">
