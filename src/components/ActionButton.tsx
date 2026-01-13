@@ -44,12 +44,12 @@ export function ActionButton({
           )} />
         </div>
         <div className="flex-1">
-          <h3 className={cn(
+          <h2 className={cn(
             'font-display font-semibold text-lg mb-1',
             variant === 'primary' ? 'text-primary-foreground' : 'text-foreground'
           )}>
             {label}
-          </h3>
+          </h2>
           <p className={cn(
             'text-sm',
             variant === 'primary' ? 'text-primary-foreground/80' : 'text-muted-foreground'
