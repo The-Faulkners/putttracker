@@ -10,6 +10,7 @@ import { usePracticeData } from '@/hooks/usePracticeData';
 import { useWakeLock } from '@/hooks/useWakeLock';
 import { PracticeSet, PuttResult } from '@/types/practice';
 import { PuttResultsIndicator } from '@/components/PuttResultsIndicator';
+import { SessionSummary } from '@/components/SessionSummary';
 export default function ActiveSession() {
   const {
     sessionId
@@ -32,6 +33,8 @@ export default function ActiveSession() {
   const [puttResults, setPuttResults] = useState<PuttResult[]>([]);
   const [elapsed, setElapsed] = useState(0);
   const [showSummary, setShowSummary] = useState(false);
+  const [showSessionSummary, setShowSessionSummary] = useState(false);
+  const [sessionDuration, setSessionDuration] = useState(0);
   const [currentDistance, setCurrentDistance] = useState<number | undefined>(
     () => settings.lastDistance
   );
@@ -139,8 +142,19 @@ export default function ActiveSession() {
     setCurrentSet(null);
   };
   const handleEndSession = () => {
+    // Calculate total session duration
+    const totalDuration = Math.floor((Date.now() - new Date(session.startTime).getTime()) / 1000);
+    setSessionDuration(totalDuration);
     endSession(session.id);
+    setShowSessionSummary(true);
+  };
+
+  const handleGoHome = () => {
     navigate('/');
+  };
+
+  const handleViewAnalysis = () => {
+    navigate('/analysis');
   };
   const accuracy = totalPutts > 0 ? madeCount / totalPutts * 100 : 0;
 
@@ -148,6 +162,23 @@ export default function ActiveSession() {
   const sessionMade = session.sets.reduce((acc, s) => acc + s.discsScored, 0) + (showSummary ? 0 : madeCount);
   const sessionThrown = session.sets.reduce((acc, s) => acc + s.discsThrown, 0) + (showSummary ? 0 : totalPutts);
   const sessionAccuracy = sessionThrown > 0 ? sessionMade / sessionThrown * 100 : 0;
+  // Show session summary screen
+  if (showSessionSummary) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Header title="Session Summary" />
+        <div className="flex-1 px-6 py-4 flex flex-col">
+          <SessionSummary
+            session={session}
+            sessionDuration={sessionDuration}
+            onGoHome={handleGoHome}
+            onViewAnalysis={handleViewAnalysis}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return <div className="min-h-screen bg-background flex flex-col">
       <Header title={showSummary ? 'Set Complete' : `Set ${session.sets.length + 1}`} rightContent={<div className="flex items-center gap-3">
             {wakeLockSupported && (
