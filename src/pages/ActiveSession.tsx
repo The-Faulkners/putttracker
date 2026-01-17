@@ -35,17 +35,20 @@ export default function ActiveSession() {
   const [showSummary, setShowSummary] = useState(false);
   const [showSessionSummary, setShowSessionSummary] = useState(false);
   const [sessionDuration, setSessionDuration] = useState(0);
-  const [currentDistance, setCurrentDistance] = useState<number | undefined>(
-    () => settings.lastDistance
-  );
+  const [currentDistance, setCurrentDistance] = useState<number | undefined>(undefined);
   const totalPutts = madeCount + missedCount;
   const discsPerSet = session?.defaultDiscsPerSet || 10;
   const remainingPutts = discsPerSet - totalPutts;
   const isSetComplete = totalPutts >= discsPerSet;
 
-  // Start first set automatically
+  // Start first set automatically and set initial distance from previous set
   useEffect(() => {
     if (session && !currentSet && !showSummary) {
+      // Get distance from last set of this session, or fall back to settings
+      const previousSetDistance = session.sets.length > 0
+        ? session.sets[session.sets.length - 1].distance
+        : settings.lastDistance ?? 20;
+      setCurrentDistance(previousSetDistance);
       startNewSet();
     }
   }, [session]);
