@@ -36,6 +36,7 @@ export default function History() {
   const [editScored, setEditScored] = useState(0);
   const [editThrown, setEditThrown] = useState(0);
   const [editPuttResults, setEditPuttResults] = useState<PuttResult[]>([]);
+  const [editDistance, setEditDistance] = useState<number | undefined>(undefined);
 
   const refreshSessions = () => setSessions(getCompletedSessions());
 
@@ -65,6 +66,7 @@ export default function History() {
     setEditScored(set.discsScored);
     setEditThrown(set.discsThrown);
     setEditPuttResults(set.puttResults || []);
+    setEditDistance(set.distance);
   };
 
   const handleTogglePutt = (index: number) => {
@@ -80,7 +82,7 @@ export default function History() {
 
   const handleSaveSet = () => {
     if (editingSession && editingSet) {
-      updateSet(editingSession, editingSet.id, editScored, editThrown, editPuttResults.length > 0 ? editPuttResults : undefined);
+      updateSet(editingSession, editingSet.id, editScored, editThrown, editPuttResults.length > 0 ? editPuttResults : undefined, editDistance);
       refreshSessions();
       setEditingSession(null);
       setEditingSet(null);
@@ -259,6 +261,18 @@ export default function History() {
               </div>
             )}
             
+            {/* Distance */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Distance (ft)</label>
+              <Input
+                type="number"
+                min={1}
+                value={editDistance || ''}
+                onChange={(e) => setEditDistance(e.target.value ? Number(e.target.value) : undefined)}
+                placeholder="feet"
+              />
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">Made</label>
