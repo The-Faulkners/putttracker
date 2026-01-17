@@ -3,6 +3,7 @@ import { Play, History, BarChart3, Target, Flame, Trophy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ActionButton } from '@/components/ActionButton';
 import { StatCard } from '@/components/StatCard';
+import { DataManagement } from '@/components/DataManagement';
 import { usePracticeData } from '@/hooks/usePracticeData';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefresh } from '@/components/PullToRefresh';
@@ -85,6 +86,20 @@ const Index = () => {
         delay: 0.4
       }}>
           <ActionButton icon={BarChart3} label="Analysis" description="See your progress and trends" variant="secondary" onClick={() => navigate('/analysis')} />
+        </motion.div>
+
+        {/* Data Management */}
+        <motion.div initial={{
+        opacity: 0,
+        y: 20
+      }} animate={{
+        opacity: 1,
+        y: 0
+      }} transition={{
+        delay: 0.5
+      }} className="pt-4 border-t border-border">
+          <p className="text-sm text-muted-foreground mb-3 text-center">Backup & Restore</p>
+          <DataManagement />
         </motion.div>
       </div>
     </main>
