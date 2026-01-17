@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Target, Clock, Trash2, Pencil, Check, X } from 'lucide-react';
 import { Header } from '@/components/Header';
+import { DataManagement } from '@/components/DataManagement';
 import { usePracticeData } from '@/hooks/usePracticeData';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -199,6 +200,12 @@ export default function History() {
             })}
           </div>
         )}
+
+        {/* Data Management */}
+        <div className="mt-6 pt-4 border-t border-border">
+          <p className="text-sm text-muted-foreground mb-3 text-center">Backup & Restore</p>
+          <DataManagement />
+        </div>
       </div>
 
       {/* Delete Confirmation Dialog */}
