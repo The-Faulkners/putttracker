@@ -152,7 +152,7 @@ export default function Analysis() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header title="Analysis" showBack />
+      <Header title="Analysis" showBack showHome />
       
       <div className="px-6 py-6">
         {stats.totalSessions === 0 ? (

@@ -1,15 +1,16 @@
 import { motion } from 'framer-motion';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Home } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
 interface HeaderProps {
   title: string;
   showBack?: boolean;
+  showHome?: boolean;
   rightContent?: React.ReactNode;
 }
 
-export function Header({ title, showBack = false, rightContent }: HeaderProps) {
+export function Header({ title, showBack = false, showHome = false, rightContent }: HeaderProps) {
   const navigate = useNavigate();
 
   return (
@@ -31,7 +32,19 @@ export function Header({ title, showBack = false, rightContent }: HeaderProps) {
         )}
         <h1 className="font-display font-bold text-xl text-foreground">{title}</h1>
       </div>
-      {rightContent && <div>{rightContent}</div>}
+      <div className="flex items-center gap-2">
+        {rightContent && <div>{rightContent}</div>}
+        {showHome && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate('/')}
+            className="rounded-full"
+          >
+            <Home className="w-5 h-5" />
+          </Button>
+        )}
+      </div>
     </motion.header>
   );
 }

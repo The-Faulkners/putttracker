@@ -91,7 +91,7 @@ export default function History() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header title="History" showBack />
+      <Header title="History" showBack showHome />
       
       <div className="px-6 py-6">
         {sessions.length === 0 ? (
