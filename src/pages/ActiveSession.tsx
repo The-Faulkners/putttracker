@@ -1,16 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Target, Check, X, RotateCcw, Square, Timer, ChevronRight, Ruler, Sun } from 'lucide-react';
+import { Target, Check, X, RotateCcw, Square, Timer, ChevronRight, Ruler, Sun, Mic, MicOff } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { usePracticeData } from '@/hooks/usePracticeData';
 import { useWakeLock } from '@/hooks/useWakeLock';
+import { useVoiceRecognition } from '@/hooks/useVoiceRecognition';
 import { PracticeSet, PuttResult } from '@/types/practice';
 import { PuttResultsIndicator } from '@/components/PuttResultsIndicator';
 import { SessionSummary } from '@/components/SessionSummary';
+
 export default function ActiveSession() {
   const {
     sessionId
@@ -40,6 +42,46 @@ export default function ActiveSession() {
   const discsPerSet = session?.defaultDiscsPerSet || 10;
   const remainingPutts = discsPerSet - totalPutts;
   const isSetComplete = totalPutts >= discsPerSet;
+
+  // Voice recognition handlers - wrapped in useCallback to prevent infinite loops
+  const voiceHandleMade = useCallback(() => {
+    if (totalPutts < discsPerSet) {
+      setMadeCount(prev => prev + 1);
+      setPuttResults(prev => [...prev, 'made']);
+    }
+  }, [totalPutts, discsPerSet]);
+
+  const voiceHandleMissed = useCallback(() => {
+    if (totalPutts < discsPerSet) {
+      setMissedCount(prev => prev + 1);
+      setPuttResults(prev => [...prev, 'missed']);
+    }
+  }, [totalPutts, discsPerSet]);
+
+  const voiceHandleUndo = useCallback(() => {
+    if (puttResults.length > 0) {
+      const lastResult = puttResults[puttResults.length - 1];
+      setPuttResults(prev => prev.slice(0, -1));
+      if (lastResult === 'made') {
+        setMadeCount(prev => prev - 1);
+      } else {
+        setMissedCount(prev => prev - 1);
+      }
+    }
+  }, [puttResults]);
+
+  const {
+    isListening,
+    isSupported: voiceSupported,
+    toggleListening,
+    lastHeard,
+    error: voiceError,
+  } = useVoiceRecognition({
+    onMade: voiceHandleMade,
+    onMissed: voiceHandleMissed,
+    onUndo: voiceHandleUndo,
+    enabled: !showSummary && !showSessionSummary && !isSetComplete,
+  });
 
   // Start first set automatically and set initial distance from previous set
   useEffect(() => {
@@ -184,6 +226,15 @@ export default function ActiveSession() {
 
   return <div className="min-h-screen bg-background flex flex-col">
       <Header title={showSummary ? 'Set Complete' : `Set ${session.sets.length + 1}`} rightContent={<div className="flex items-center gap-3">
+            {voiceSupported && !showSummary && (
+              <button 
+                onClick={toggleListening}
+                className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-colors ${isListening ? 'bg-success/20 text-success animate-pulse' : 'text-muted-foreground'}`}
+                title={isListening ? 'Voice active - say "made" or "miss"' : 'Enable voice input'}
+              >
+                {isListening ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
+              </button>
+            )}
             {wakeLockSupported && (
               <button 
                 onClick={toggleWakeLock}
@@ -275,6 +326,19 @@ export default function ActiveSession() {
                   className="w-20 h-8 text-center"
                 />
                 <span className="text-sm text-muted-foreground">ft</span>
+                
+                {/* Voice status indicator */}
+                {isListening && (
+                  <div className="ml-auto flex items-center gap-2 text-success text-xs">
+                    <Mic className="w-3 h-3 animate-pulse" />
+                    <span>Listening{lastHeard ? `: "${lastHeard}"` : ''}</span>
+                  </div>
+                )}
+                {voiceError && (
+                  <div className="ml-auto text-destructive text-xs">
+                    {voiceError}
+                  </div>
+                )}
               </div>
 
               {/* Progress indicator */}
