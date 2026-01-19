@@ -87,10 +87,8 @@ export default function ActiveSession() {
   useEffect(() => {
     if (session && !currentSet && !showSummary) {
       // Get distance from last set of this session, or fall back to settings
-      const previousSetDistance = session.sets.length > 0
-        ? session.sets[session.sets.length - 1].distance
-        : settings.lastDistance ?? 20;
-      setCurrentDistance(previousSetDistance);
+      const nextDistance = settings.lastDistance ?? 20;
+      setCurrentDistance(nextDistance);
       startNewSet();
     }
   }, [session]);
