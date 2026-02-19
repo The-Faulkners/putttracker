@@ -1,0 +1,7 @@
+services:
+  putttracker:
+    image: ghcr.io/the-faulkners/putttracker:latest
+    container_name: putttracker
+    restart: unless-stopped
+    ports:
+      - "38081:80"
