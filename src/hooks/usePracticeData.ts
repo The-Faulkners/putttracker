@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { PracticeSession, SessionSettings, PuttResult } from '@/types/practice';
+import { generateId } from '@/lib/utils';
 
 const SESSIONS_KEY = 'disc-golf-sessions';
 const SETTINGS_KEY = 'disc-golf-settings';
@@ -56,7 +57,7 @@ export function usePracticeData() {
 
   const createSession = useCallback((discsPerSet: number): PracticeSession => {
     const newSession: PracticeSession = {
-      id: crypto.randomUUID(),
+      id: generateId(),
       userId: 'default-user',
       startTime: new Date(),
       defaultDiscsPerSet: discsPerSet,
@@ -68,7 +69,8 @@ export function usePracticeData() {
     const updatedSessions = [...currentSessions, newSession];
     
     saveSessions(updatedSessions);
-    saveSettings({ lastDiscsPerSet: discsPerSet });
+    const currentSettings = getStoredSettings();
+    saveSettings({ ...currentSettings, lastDiscsPerSet: discsPerSet });
     
     return newSession;
   }, [saveSessions, saveSettings]);

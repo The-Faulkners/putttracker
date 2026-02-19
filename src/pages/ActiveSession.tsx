@@ -10,6 +10,7 @@ import { usePracticeData } from '@/hooks/usePracticeData';
 import { useWakeLock } from '@/hooks/useWakeLock';
 import { useVoiceRecognition } from '@/hooks/useVoiceRecognition';
 import { PracticeSet, PuttResult } from '@/types/practice';
+import { generateId } from '@/lib/utils';
 import { PuttResultsIndicator } from '@/components/PuttResultsIndicator';
 import { SessionSummary } from '@/components/SessionSummary';
 
@@ -113,7 +114,7 @@ export default function ActiveSession() {
     const lastSetDistance = previousSetDistance ?? settings.lastDistance ?? 20;
     
     const newSet: PracticeSet = {
-      id: crypto.randomUUID(),
+      id: generateId(),
       sessionId: session.id,
       startTime: new Date(),
       discsThrown: session.defaultDiscsPerSet,
