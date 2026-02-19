@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Background -->
+  <rect width="32" height="32" rx="7" fill="#0f172a"/>
+
+  <!-- Flying disc -->
+  <ellipse cx="16" cy="9" rx="8" ry="2.8" fill="#4ade80"/>
+  <ellipse cx="15" cy="8.5" rx="4.5" ry="1.5" fill="#16a34a" opacity="0.7"/>
+
+  <!-- Basket top ring -->
+  <ellipse cx="16" cy="20" rx="7" ry="2" stroke="#e2e8f0" stroke-width="1.5" fill="none"/>
+
+  <!-- Chains -->
+  <line x1="9" y1="20" x2="9.5" y2="27" stroke="#e2e8f0" stroke-width="1"/>
+  <line x1="12.5" y1="18.5" x2="12.5" y2="27" stroke="#e2e8f0" stroke-width="1"/>
+  <line x1="16" y1="18" x2="16" y2="27" stroke="#e2e8f0" stroke-width="1"/>
+  <line x1="19.5" y1="18.5" x2="19.5" y2="27" stroke="#e2e8f0" stroke-width="1"/>
+  <line x1="23" y1="20" x2="22.5" y2="27" stroke="#e2e8f0" stroke-width="1"/>
+
+  <!-- Basket bottom curve -->
+  <path d="M9 27 Q16 30 23 27" stroke="#e2e8f0" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+</svg>
